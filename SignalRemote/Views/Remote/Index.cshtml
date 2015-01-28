@@ -1,0 +1,27 @@
+﻿@{
+    ViewBag.Title = "SignalRemote";
+    var screenSize = SignalRemote.ScreenCapture.GetScreenSize();
+}
+
+<script src="Scripts/jquery-1.8.2.min.js"></script>
+<script src="Scripts/jquery.signalR-2.2.0.js"></script>
+<script src="signalr/hubs"></script>
+
+<h2>SignalRemote</h2>
+<img id="screen" style="width: @(screenSize.Width)px; height: @(screenSize.Height)px;" />
+
+<script>
+  $(function () {
+    var remoteHub = $.connection.remoteHub;
+    $.connection.hub.start();
+
+    var screenRefreshInterval = setInterval(function () {
+      $('#screen')[0].src = '@Url.Action("Screen")?' + new Date().getTime();
+    }, 1000);
+
+    $(document).on('click', '#screen', function (e) {
+      var screenOffset = $('#screen').offset();
+      remoteHub.server.sendInput({ left: parseInt(e.pageX - screenOffset.left), top: parseInt(e.pageY - screenOffset.top) });
+    });
+  });
+</script>

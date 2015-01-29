@@ -15,9 +15,22 @@
     var remoteHub = $.connection.remoteHub;
     $.connection.hub.start();
 
-    var screenRefreshInterval = setInterval(function () {
-      $('#screen')[0].src = '@Url.Action("Screen")?' + new Date().getTime();
-    }, 1000);
+    var $screen = $('#screen');
+    var lastScreenRefreshTime;
+    var refreshScreen = function () {
+      lastScreenRefreshTime = new Date().getTime();
+      $screen[0].src = '@Url.Action("Screen")?' + lastScreenRefreshTime;
+    };
+    $screen.load(function () {
+      var msSinceLastRefresh = new Date().getTime() - lastScreenRefreshTime;
+      if (msSinceLastRefresh < 1000) {
+        setTimeout(refreshScreen, 1000 - msSinceLastRefresh);
+      }
+      else {
+        refreshScreen();
+      }
+    });
+    refreshScreen();
 
     $(document).on('click', '#screen', function (e) {
       var screenOffset = $('#screen').offset();

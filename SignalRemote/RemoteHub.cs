@@ -17,6 +17,16 @@ namespace SignalRemote
     {
       new TouchScreen(ScreenCapture.GetScreenSize()).TouchAt(input.Left, input.Top);
     }
+
+    public void MoveMouse(MoveInput input)
+    {
+      new TouchPad().Move(input.DeltaX, input.DeltaY);
+    }
+
+    public void Click()
+    {
+      new TouchPad().Click();
+    }
   }
 
   public class RemoteInput
@@ -26,6 +36,34 @@ namespace SignalRemote
 
     [JsonProperty("top")]
     public int Top { get; set; }
+  }
+
+  public class MoveInput
+  {
+    [JsonProperty("dx")]
+    public int DeltaX { get; set; }
+
+    [JsonProperty("dy")]
+    public int DeltaY { get; set; }
+  }
+
+  public static class NativeMouseMethods
+  {
+    [Flags]
+    public enum MouseEvent
+    {
+      Move = 1,
+      LeftDown = 2,
+      LeftUp = 4,
+      RightDown = 8,
+      RightUp = 16,
+      MiddleDown = 32,
+      MiddleUp = 64,
+      Absolute = 32768
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.None, ExactSpelling = false)]
+    public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, int dwExtraInfo);
   }
 
   public class TouchScreen
@@ -40,30 +78,28 @@ namespace SignalRemote
     public void TouchAt(int x, int y)
     {
       var normalized = Normalize(x, y);
-      mouse_event((uint)(MouseEvent.Move | MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
-      mouse_event((uint)(MouseEvent.LeftDown | MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
-      mouse_event((uint)(MouseEvent.LeftUp | MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
+      NativeMouseMethods.mouse_event((uint)(NativeMouseMethods.MouseEvent.Move | NativeMouseMethods.MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
+      NativeMouseMethods.mouse_event((uint)(NativeMouseMethods.MouseEvent.LeftDown | NativeMouseMethods.MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
+      NativeMouseMethods.mouse_event((uint)(NativeMouseMethods.MouseEvent.LeftUp | NativeMouseMethods.MouseEvent.Absolute), normalized.X, normalized.Y, 0, 0);
     }
 
     private Point Normalize(int x, int y)
     {
       return new Point((int)(((float)x / size.Width) * 65535), (int)(((float)y / size.Height) * 65535));
     }
+  }
 
-    [Flags]
-    private enum MouseEvent
+  public class TouchPad
+  {
+    public void Move(int dx, int dy)
     {
-      Move = 1,
-      LeftDown = 2,
-      LeftUp = 4,
-      RightDown = 8,
-      RightUp = 16,
-      MiddleDown = 32,
-      MiddleUp = 64,
-      Absolute = 32768
+      NativeMouseMethods.mouse_event((uint)NativeMouseMethods.MouseEvent.Move, dx, dy, 0, 0);
     }
 
-    [DllImport("user32.dll", CharSet = CharSet.None, ExactSpelling = false)]
-    private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, int dwExtraInfo);
+    public void Click()
+    {
+      NativeMouseMethods.mouse_event((uint)NativeMouseMethods.MouseEvent.LeftDown, 0, 0, 0, 0);
+      NativeMouseMethods.mouse_event((uint)NativeMouseMethods.MouseEvent.LeftUp, 0, 0, 0, 0);
+    }
   }
 }

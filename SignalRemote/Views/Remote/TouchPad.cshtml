@@ -1,0 +1,80 @@
+﻿<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script src="~/Scripts/jquery.signalR-2.2.0.js"></script>
+<script src="~/signalr/hubs"></script>
+
+<div class="touchpad">
+
+</div>
+<button class="left-button">Left</button>
+<button class="right-button">Right</button>
+<button class="up-button">Up</button>
+<button class="down-button">Down</button>
+
+<style>
+  .touchpad {
+    width: 500px;
+    height: 400px;
+    border: 1px solid black;
+  }
+</style>
+
+<script>
+  $(function () {
+    var remoteHub = $.connection.remoteHub;
+    $.connection.hub.start();
+
+    var lastMousePosition = null;
+    var moveMouse = function (e) {
+      if (lastMousePosition) {
+        var delta = { dx: parseInt(e.pageX - lastMousePosition.x), dy: parseInt(e.pageY - lastMousePosition.y) };
+        console.log('moving mouse dx: ' + delta.dx + ', dy: ' + delta.dy);
+        remoteHub.server.moveMouse(delta);
+      }
+
+      lastMousePosition = { x: e.pageX, y: e.pageY };
+    };
+
+    $(document).on('mousemove', '.touchpad', function (e) {
+      moveMouse(e);
+    });
+
+    $(document).on('touchmove', '.touchpad', function (e) {
+      var touch = e.originalEvent.touches[0];
+      console.log('touch move: ' + touch.pageX + ', ' + touch.pageY);
+      moveMouse(touch);
+    });
+
+    $(document).on('mouseenter', '.touchpad', function (e) {
+      lastMousePosition = { x: e.pageX, y: e.pageY };
+    });
+
+    $(document).on('touchstart', '.touchpad', function (e) {
+      lastMousePosition = { x: e.pageX, y: e.pageY };
+    });
+
+    $(document).on('mouseleave', '.touchpad', function () {
+      lastMousePosition = null;
+    });
+
+    $(document).on('touchend', '.touchpad', function () {
+      lastMousePosition = null;
+    });
+
+    $(document).on('click', '.touchpad', function () {
+      remoteHub.server.click();
+    });
+
+    $('.left-button').click(function () {
+      remoteHub.server.moveMouse({ dx: -10, dy: 0 });
+    });
+    $('.right-button').click(function () {
+      remoteHub.server.moveMouse({ dx: 10, dy: 0 });
+    });
+    $('.up-button').click(function () {
+      remoteHub.server.moveMouse({ dx: 0, dy: -10 });
+    });
+    $('.down-button').click(function () {
+      remoteHub.server.moveMouse({ dx: 0, dy: 10 });
+    });
+  });
+</script>

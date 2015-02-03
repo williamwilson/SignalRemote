@@ -46,5 +46,10 @@ namespace SignalRemote.Controllers
 
       return jpegCodec;
     }
+
+    public ActionResult TouchPad()
+    {
+      return View();
+    }
   }
 }
